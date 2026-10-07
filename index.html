@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Describing Force: Science 4 Games</title>
+<style>
+:root{--bg:#f3efff;--card:#fff;--ink:#2d2250;--acc:#6c4ad0;--ok:#2e9e5b;--bad:#d64545;--soft:#e4dcff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17132b;--card:#241d44;--ink:#efeaff;--soft:#3a2f6b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,sans-serif;padding:14px;text-align:center}
+.wrap{max-width:560px;margin:0 auto}
+h1{font-size:1.4rem;margin:4px 0}h2{font-size:1.1rem;margin:14px 0 6px}
+.sub{opacity:.75;font-size:.9rem}
+.card{background:var(--card);border-radius:18px;padding:14px;box-shadow:0 3px 10px #0002;margin:10px 0}
+button{font:inherit;cursor:pointer;border:0;border-radius:14px;color:inherit}
+.b{background:var(--acc);color:#fff;padding:12px 20px;font-weight:700;margin:4px}
+.b.big{font-size:1.2rem;padding:16px 30px}
+.chip{background:var(--soft);padding:9px 14px;margin:3px;font-weight:600;border:2px solid transparent}
+.chip.on{border-color:var(--acc);background:var(--acc);color:#fff}
+select,input,textarea{font:inherit;color:inherit;background:var(--soft);border:0;border-radius:10px;padding:8px}
+textarea{width:100%;height:300px;font-size:.85rem;text-align:left}
+.hud{display:flex;justify-content:space-between;font-weight:800;font-size:1.1rem}
+.bar{height:10px;background:var(--soft);border-radius:6px;overflow:hidden;margin:6px 0}
+.bar i{display:block;height:100%;background:var(--acc);width:100%;transition:width 1s linear}
+.q{font-size:1.5rem;font-weight:800;margin:18px 0;min-height:3.5em;display:flex;align-items:center;justify-content:center}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{background:var(--soft);padding:18px 8px;font-size:1.1rem;font-weight:700}
+.opt.ok{background:var(--ok);color:#fff}.opt.no{background:var(--bad);color:#fff}
+.teams{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.teams input{width:44%}
+.row{display:flex;justify-content:space-between;padding:8px 12px;border-radius:10px;background:var(--soft);margin:5px 0;font-weight:700}
+.row.w{background:var(--acc);color:#fff}
+.hide{display:none}
+.fall{position:fixed;top:-30px;font-size:1.8rem;animation:fl 2.4s linear forwards;pointer-events:none}
+@keyframes fl{to{transform:translateY(110vh) rotate(360deg)}}
+</style></head><body><div class="wrap">
+
+<div id="setup">
+ <h1>💪 Describing Force 💪</h1>
+ <div class="sub">Science 4 · Term 2 · Week 4 · Pushes, Pulls, Rigid &amp; Soft Objects</div>
+ <div class="card"><h2>Mode</h2>
+  <button class="chip on" id="m-solo">🙋 Solo</button><button class="chip" id="m-team">👥 Teams</button>
+  <div id="tbox" class="hide"><h2>Teams</h2>
+   <select id="tn"><option>2</option><option>3</option><option selected>4</option></select>
+   <div class="teams" id="tnames"></div></div>
+  <h2>Time per turn</h2>
+  <select id="time"><option value="60">1 minute</option><option value="90">1 minute 30 seconds</option><option value="120">2 minutes</option></select>
+  <h2>Topics</h2><div id="cats"></div>
+ </div>
+ <button class="b big" id="go">▶ Play</button><br>
+ <button class="b" id="edit" style="background:var(--soft);color:inherit">✏️ Edit questions</button>
+</div>
+
+<div id="editor" class="hide">
+ <h1>✏️ Edit Questions</h1>
+ <div class="sub">One per line: <b>Topic | Question | Correct answer | Wrong answer | (more wrong answers)</b></div>
+ <div class="card"><textarea id="ta" spellcheck="false"></textarea></div>
+ <button class="b" id="save">💾 Save</button>
+ <button class="b" id="reset" style="background:var(--bad)">Reset to default</button>
+ <button class="b" id="back" style="background:var(--soft);color:inherit">← Back</button>
+ <div class="sub" id="emsg"></div>
+</div>
+
+<div id="ready" class="hide">
+ <h1 id="rname"></h1><div class="card"><div style="font-size:3rem">🚀</div><div id="rinfo"></div></div>
+ <button class="b big" id="start">▶ Start!</button>
+</div>
+
+<div id="game" class="hide">
+ <div class="hud"><span id="gname"></span><span>⭐ <span id="gs">0</span></span><span>⏱ <span id="gt"></span></span></div>
+ <div class="bar"><i id="gbar"></i></div>
+ <div class="card"><div class="q" id="q"></div><div class="opts" id="opts"></div></div>
+</div>
+
+<div id="end" class="hide">
+ <h1 id="etitle"></h1><div class="card" id="ebody"></div>
+ <button class="b big" id="again">↺ Play again</button>
+</div>
+
+</div>
+<script>
+const DEF=`Push or Pull|Pushing a door 🚪|Push|Pull
+Push or Pull|Pulling a drawer 🗄️|Pull|Push
+Push or Pull|Pushing a broom 🧹|Push|Pull
+Push or Pull|Pulling a bag 🧳|Pull|Push
+Push or Pull|Kicking a ball ⚽|Push|Pull
+Push or Pull|Opening a zipper|Pull|Push
+Push or Pull|Pushing a shopping cart 🛒|Push|Pull
+Push or Pull|Pulling a rope in tug of war|Pull|Push
+Push or Pull|Throwing a ball|Push|Pull
+Push or Pull|Pulling a wagon|Pull|Push
+Rigid or Soft|Rock 🪨|Rigid|Soft
+Rigid or Soft|Sponge 🧽|Soft|Rigid
+Rigid or Soft|Chair 🪑|Rigid|Soft
+Rigid or Soft|Pillow|Soft|Rigid
+Rigid or Soft|Metal spoon 🥄|Rigid|Soft
+Rigid or Soft|Cloth|Soft|Rigid
+Rigid or Soft|Clay|Soft|Rigid
+Rigid or Soft|Glass bottle|Rigid|Soft
+Rigid or Soft|Cotton ball|Soft|Rigid
+Rigid or Soft|Wooden table|Rigid|Soft
+Effects of Force|A force makes a bike go faster 🚲. What changed?|Speed|Direction|Shape
+Effects of Force|A kicked ball curves to the left ⚽. What changed?|Direction|Speed|Shape
+Effects of Force|Squeezing a sponge 🧽. What changed?|Shape|Speed|Direction
+Effects of Force|A goalkeeper stops a rolling ball. What changed?|Speed|Shape|Direction
+Effects of Force|Stretching a rubber band. What changed?|Shape|Direction|Speed
+Effects of Force|A bat hits a ball back to the pitcher. What changed?|Direction|Shape|Speed
+Direction of Force|The arrowhead points to where the force is...|Acting|Hiding|Resting
+Direction of Force|An arrow pointing ⬆️ means the force is...|Upward|Downward|Left
+Direction of Force|An arrow pointing ⬇️ means the force is...|Downward|Upward|Right
+Direction of Force|An arrow pointing ➡️ means the force is...|Right (forward)|Left (backward)|Upward
+Direction of Force|An arrow pointing ⬅️ means the force is...|Left (backward)|Right (forward)|Downward
+Force Facts|A force is a...|Push or pull|Color|Sound
+Force Facts|A push moves an object ___ you.|Away from|Toward|Around
+Force Facts|A pull moves an object ___ you.|Toward|Away from|Over
+Force Facts|Which can force NOT change?|Color of an object|Speed|Shape
+Force Facts|Rigid objects are...|Hard, not easily bent|Easily bent|Easily squeezed
+Force Facts|Soft objects can be easily...|Compressed|Hardened|Lit`;
+const $=id=>document.getElementById(id);
+const S=(a)=>[...a].sort(()=>Math.random()-.5);
+let bank=[],picked=new Set(),mode="solo",teams=[],ti=0,pool=[],pi=0,left=0,tm=null,score=0,total=0,hits=0,lock=false,TIME=60;
+function load(){let t=DEF;try{t=localStorage.getItem("forceQ")||DEF}catch(e){}parse(t);$("ta").value=t}
+function parse(t){bank=t.split("\n").map(l=>l.split("|").map(x=>x.trim())).filter(p=>p.length>=4&&p[1]&&p[2]).map(p=>({c:p[0],q:p[1],a:p[2],w:p.slice(3).filter(Boolean)}));picked=new Set(bank.map(b=>b.c));cats()}
+function cats(){const cs=[...new Set(bank.map(b=>b.c))];$("cats").innerHTML=cs.map(c=>`<button class="chip ${picked.has(c)?"on":""}" data-c="${c}">${c}</button>`).join("");
+ $("cats").querySelectorAll(".chip").forEach(e=>e.onclick=()=>{picked.has(e.dataset.c)?picked.delete(e.dataset.c):picked.add(e.dataset.c);cats()})}
+function show(id){["setup","editor","ready","game","end"].forEach(x=>$(x).classList.toggle("hide",x!==id))}
+function names(){const n=+$("tn").value;$("tnames").innerHTML=Array.from({length:n},(_,i)=>`<input value="Team ${i+1}" maxlength="14">`).join("")}
+$("m-solo").onclick=()=>{mode="solo";$("m-solo").classList.add("on");$("m-team").classList.remove("on");$("tbox").classList.add("hide")};
+$("m-team").onclick=()=>{mode="team";$("m-team").classList.add("on");$("m-solo").classList.remove("on");$("tbox").classList.remove("hide")};
+$("tn").onchange=names;
+$("edit").onclick=()=>show("editor");$("back").onclick=()=>show("setup");
+$("save").onclick=()=>{const t=$("ta").value;parse(t);try{localStorage.setItem("forceQ",t)}catch(e){}$("emsg").textContent="✅ Saved! "+bank.length+" questions ready."};
+$("reset").onclick=()=>{$("ta").value=DEF;parse(DEF);try{localStorage.removeItem("forceQ")}catch(e){}$("emsg").textContent="Reset to default."};
+$("go").onclick=()=>{
+ const n=bank.filter(b=>picked.has(b.c));if(!n.length){alert("Pick at least one topic with questions.");return}
+ TIME=+$("time").value;
+ teams=mode==="solo"?[{n:"Solo player",s:0,a:0,h:0}]:[...$("tnames").querySelectorAll("input")].map((e,i)=>({n:e.value||"Team "+(i+1),s:0,a:0,h:0}));
+ ti=0;ready();
+};
+function ready(){$("rname").textContent=teams[ti].n+(mode==="team"?", get ready!":", get ready!");
+ $("rinfo").textContent=`Answer as many as you can in ${TIME/60>=2?"2 minutes":TIME===90?"1 min 30 sec":"1 minute"}. +10 points for each correct answer.`;show("ready")}
+$("start").onclick=()=>{pool=S(bank.filter(b=>picked.has(b.c)));pi=0;score=0;total=0;hits=0;left=TIME;$("gname").textContent=teams[ti].n;$("gs").textContent=0;show("game");nextQ();tick();tm=setInterval(tick,1000)};
+function tick(){$("gt").textContent=Math.floor(left/60)+":"+String(left%60).padStart(2,"0");$("gbar").style.width=(left/TIME*100)+"%";if(left<=0){clearInterval(tm);finishTurn();return}left--}
+function nextQ(){if(pi>=pool.length){pool=S(pool);pi=0}
+ const b=pool[pi++];lock=false;$("q").textContent=b.q;
+ $("opts").innerHTML=S([b.a,...b.w]).map(o=>`<button class="opt">${o}</button>`).join("");
+ $("opts").querySelectorAll(".opt").forEach(e=>e.onclick=()=>{if(lock)return;lock=true;total++;
+  if(e.textContent===b.a){e.classList.add("ok");score+=10;hits++;$("gs").textContent=score}
+  else{e.classList.add("no");$("opts").querySelectorAll(".opt").forEach(x=>{if(x.textContent===b.a)x.classList.add("ok")})}
+  setTimeout(()=>{if(left>=0&&!$("game").classList.contains("hide"))nextQ()},650)})}
+function finishTurn(){const t=teams[ti];t.s=score;t.a=total;t.h=hits;
+ if(ti<teams.length-1){ti++;ready();return}
+ const r=[...teams].sort((a,b)=>b.s-a.s);
+ if(mode==="solo"){$("etitle").textContent="⏰ Time's up!";$("ebody").innerHTML=`<div style="font-size:2.4rem">⭐ ${r[0].s}</div><div>${r[0].h} correct out of ${r[0].a} answered${r[0].a?" ("+Math.round(r[0].h/r[0].a*100)+"%)":""}</div>`}
+ else{const tie=r.length>1&&r[0].s===r[1].s;$("etitle").textContent=tie?"🤝 It's a tie!":"🏆 "+r[0].n+" wins!";
+  $("ebody").innerHTML=r.map((x,i)=>`<div class="row ${i===0&&!tie?"w":""}"><span>${i+1}. ${x.n}</span><span>⭐ ${x.s} (${x.h}/${x.a})</span></div>`).join("")}
+ show("end");party()}
+$("again").onclick=()=>{clearInterval(tm);show("setup")};
+function party(){for(let k=0;k<26;k++){const e=document.createElement("div");e.className="fall";e.textContent=["🎉","⭐","💪","🏆","🎈"][k%5];e.style.left=Math.random()*95+"vw";e.style.animationDelay=Math.random()*.9+"s";document.body.appendChild(e);setTimeout(()=>e.remove(),3400)}}
+load();names();
+</script></body></html>
